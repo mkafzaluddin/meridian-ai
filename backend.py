@@ -9,8 +9,7 @@ print("TOKEN LOADED:", os.getenv("MERIDIAN_TEST_TOKEN", "NOT FOUND")[:20])
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_tavily import TavilySearch
+
 from langchain.agents import create_agent
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.vectorstores import InMemoryVectorStore
@@ -21,8 +20,14 @@ import io
 
 # Update import
 # Update import
-from tools import check_order_status, get_menu, cancel_order, get_my_orders, add_to_cart, place_order
-
+from tools import (
+    check_order_status,
+    get_menu,
+    cancel_order,
+    get_my_orders,
+    add_to_cart,
+    place_order,
+)
 
 
 app = FastAPI(title="Meridian AI")
@@ -38,11 +43,15 @@ llm_map = {
 # Loaded lazily — only when PDF is uploaded
 embeddings = None
 
+
 def get_embeddings():
     global embeddings
     if embeddings is None:
+        from langchain_huggingface import HuggingFaceEmbeddings
+
         embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     return embeddings
+
 
 # RAG state
 rag_store = {"vector_store": None, "filename": None, "num_chunks": 0}
@@ -167,12 +176,26 @@ PDF Excerpts:
 
     agent = create_agent(
         model=llm,
-        tools=[search_tool, check_order_status, get_menu, cancel_order, get_my_orders, add_to_cart, place_order]
+        tools=[
+            search_tool,
+            check_order_status,
+            get_menu,
+            cancel_order,
+            get_my_orders,
+            add_to_cart,
+            place_order,
+        ]
         if request.allow_search
-        else [check_order_status, get_menu, cancel_order, get_my_orders, add_to_cart, place_order],
+        else [
+            check_order_status,
+            get_menu,
+            cancel_order,
+            get_my_orders,
+            add_to_cart,
+            place_order,
+        ],
         system_prompt=request.system_prompt,
     )
-    
 
     response = agent.invoke({"messages": messages})
     reply = response["messages"][-1].content
@@ -225,5 +248,6 @@ def pdf_status():
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
