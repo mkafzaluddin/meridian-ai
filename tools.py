@@ -1,9 +1,8 @@
 import requests
 import os
 from langchain_core.tools import tool
-
-MERIDIAN_API = "http://localhost:5101"
-
+import os
+MERIDIAN_API = os.getenv("MERIDIAN_API", "http://localhost:5101")
 
 @tool
 def get_menu(category: str = "all") -> str:
