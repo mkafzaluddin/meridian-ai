@@ -1,0 +1,117 @@
+| Restaurant Story | AI World                     |
+| ---------------- | ---------------------------- |
+| Customer         | User                         |
+| Chef             | LLM                          |
+| Waiter           | Tool                         |
+| Manager          | Agent                        |
+| Recipe           | Tool Output / Search Results |
+| Food             | Final Answer                 |
+
+LLM = Tony Stark 🧠
+
+Tony is smart.
+
+He makes decisions.
+
+But he doesn't directly shoot lasers.
+
+Tool = Iron Man Suit 🔧
+
+The suit can:
+
+Fly
+Scan
+Shoot lasers
+
+But the suit isn't making decisions.
+
+Agent = JARVIS 🤖
+
+JARVIS coordinates everything.
+
+Tony says:
+"Scan the area."
+
+       ↓
+
+JARVIS tells suit:
+"Run scanner."
+
+       ↓
+
+Suit scans.
+
+       ↓
+
+Results go back.
+
+       ↓
+
+Tony decides what to do next.
+
+ai_agent.py
+Customer asks question        user- customer, llm- chef, tool- waiter, agent- manager
+        ↓
+Manager gives it to Chef       
+        ↓
+Chef thinks:
+"I need information"
+        ↓
+Chef asks Manager:
+"Send Waiter to get recipe"
+        ↓
+Manager tells Waiter
+        ↓
+Waiter brings recipe
+        ↓
+Manager gives recipe to Chef
+        ↓
+Chef cooks answer
+        ↓
+Manager sends final dish
+        ↓
+Customer receives answer
+
+
+
+backend.py
+This is the same restaurant, but now you've turned it into a food delivery business where many customers can place orders through a website.
+Old Version
+query = "latest news about USA and Iran"
+response = agent.invoke(...)
+
+You hardcoded one customer order.
+
+It's like:
+
+One customer walks into restaurant.
+Orders food.
+Gets food.
+Leaves.
+New Version
+
+Now you built a website/API.
+
+Many customers can order.
+
+Customer 1 → Ask question
+Customer 2 → Ask question
+Customer 3 → Ask question
+
+Your restaurant stays open all day.
+
+| Code                  | Restaurant Role               |
+| --------------------- | ----------------------------- |
+| FastAPI               | 🏢 Restaurant Building        |
+| `/chat` endpoint      | 🚪 Order Counter              |
+| ChatRequest           | 📋 Order Form                 |
+| Customer sending JSON | 🧑 Customer                   |
+| llm_map               | 👨‍🍳 List of Available Chefs |
+| ChatGroq              | 👨‍🍳 Groq Chef               |
+| ChatOpenAI            | 👨‍🍳 OpenAI Chef             |
+| search_tool           | 🚶 Waiter                     |
+| create_agent          | 🎯 Manager Factory            |
+| agent                 | 🎯 Manager                    |
+| system_prompt         | 📜 Chef Instructions          |
+| response              | 🍽️ Food                      |
+| uvicorn.run()         | 🔓 Open Restaurant            |

@@ -1,0 +1,8 @@
+1. cd C:\Users\mkafz\Desktop\Python-L2\AI-Chatbot
+.\venv\Scripts\Activate
+
+2.      python test_chunking.py
+
+3.      python backend.py
+
+4.      streamlit run frontend.py

@@ -1,0 +1,11 @@
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+chroma_db/
+*.pdf
+Dockerfile
+Dockerfile.frontend
+docker-compose.yml
+.dockerignore
