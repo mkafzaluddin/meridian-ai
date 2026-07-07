@@ -35,8 +35,14 @@ llm_map = {
     "openai/gpt-oss-20b": ChatGroq(model="openai/gpt-oss-20b"),
 }
 
-# Embeddings loaded once — not recreated on every request
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+# Loaded lazily — only when PDF is uploaded
+embeddings = None
+
+def get_embeddings():
+    global embeddings
+    if embeddings is None:
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return embeddings
 
 # RAG state
 rag_store = {"vector_store": None, "filename": None, "num_chunks": 0}
@@ -219,5 +225,5 @@ def pdf_status():
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
