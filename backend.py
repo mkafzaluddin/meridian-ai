@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 from langchain.agents import create_agent
+from fastapi.middleware.cors import CORSMiddleware
+
 # from langchain_text_splitters import RecursiveCharacterTextSplitter  # PDF feature
 # from langchain_core.vectorstores import InMemoryVectorStore  # PDF feature
 # from langchain_core.documents import Document  # PDF feature
@@ -29,7 +31,13 @@ from tools import (
 )
 
 app = FastAPI(title="Meridian AI")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # in production, replace * with your actual domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # ─── Setup ────────────────────────────────────────────────────────────
 search_tool = TavilySearch(max_results=5)
 
