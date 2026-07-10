@@ -2,6 +2,8 @@
 import os
 from dotenv import load_dotenv
 
+from backend import get_embeddings
+
 load_dotenv()
 
 from pypdf import PdfReader
@@ -30,7 +32,7 @@ print(f"Built {len(documents)} chunks across {len(reader.pages)} pages")
 # Step 3 - Embed and store (now storing Documents, not raw strings)
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-vector_store = InMemoryVectorStore(embeddings)
+vector_store = InMemoryVectorStore(get_embeddings())
 vector_store.add_documents(documents)
 print("Stored all chunks as vectors")
 

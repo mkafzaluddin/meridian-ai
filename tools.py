@@ -2,17 +2,19 @@ import requests
 import os
 from langchain_core.tools import tool
 import os
-MERIDIAN_API = os.getenv("MERIDIAN_API", "http://localhost:5101")
+
+MERIDIAN_API = os.getenv("MERIDIAN_API", "https://meridian-eats-api.onrender.com")
+# This gets set per-request by backend.py based on logged-in user
+CURRENT_USER_TOKEN = os.getenv("MERIDIAN_TEST_TOKEN", "")
+
 
 @tool
 def get_menu(category: str = "all") -> str:
-  
     """Get menu items from Meridian Eats.
     Pass 'all' to get every item on the menu grouped by category.
     Pass a specific category like 'Rice', 'Salad', 'Pasta' to filter.
     Always display item ID, name, and price clearly to the customer.
     Use 'all' when customer asks for full menu, whole menu, or all items."""
-    
 
     try:
         response = requests.get(f"{MERIDIAN_API}/api/food", timeout=5)
@@ -31,12 +33,11 @@ def get_menu(category: str = "all") -> str:
     # Build a clean text summary for the LLM to read
     lines = []
     for f in foods:
-      lines.append(
-     f"ID:{f['id']} | {f['name']} ({f['categoryName']}) - ${f['price']} - Rating: {f['rating']}/5"
-    )
+        lines.append(
+            f"ID:{f['id']} | {f['name']} ({f['categoryName']}) - ${f['price']} - Rating: {f['rating']}/5"
+        )
 
     return "\n".join(lines)
-
 
 
 @tool
@@ -44,17 +45,13 @@ def check_order_status(order_id: str) -> str:
     """Use this when the user asks about their order status, where their food is, or order tracking.
     The order_id is a number like 5 or 12."""
 
-    token = os.getenv("MERIDIAN_TEST_TOKEN")
+    token = CURRENT_USER_TOKEN
 
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
     try:
         response = requests.get(
-            f"{MERIDIAN_API}/api/orders/{order_id}/track",
-            headers=headers,
-            timeout=5
+            f"{MERIDIAN_API}/api/orders/{order_id}/track", headers=headers, timeout=5
         )
 
         if response.status_code == 404:
@@ -69,7 +66,9 @@ def check_order_status(order_id: str) -> str:
     except requests.exceptions.RequestException as e:
         return f"Could not reach the order tracking service: {e}"
 
-    items = ", ".join([f"{item['name']} x{item['quantity']}" for item in order["items"]])
+    items = ", ".join(
+        [f"{item['name']} x{item['quantity']}" for item in order["items"]]
+    )
 
     return (
         f"Order #{order['id']}\n"
@@ -79,20 +78,19 @@ def check_order_status(order_id: str) -> str:
         f"Delivering to: {order['street']}, {order['city']}, {order['state']}"
     )
 
+
 @tool
 def cancel_order(order_id: str) -> str:
     """Use this when the user wants to cancel an order.
     Only Pending orders can be cancelled.
     The order_id is a number like 3 or 5."""
 
-    token = os.getenv("MERIDIAN_TEST_TOKEN")
+    token = CURRENT_USER_TOKEN
     headers = {"Authorization": f"Bearer {token}"}
 
     try:
         response = requests.put(
-            f"{MERIDIAN_API}/api/orders/{order_id}/cancel",
-            headers=headers,
-            timeout=5
+            f"{MERIDIAN_API}/api/orders/{order_id}/cancel", headers=headers, timeout=5
         )
 
         if response.status_code == 404:
@@ -117,14 +115,12 @@ def get_my_orders(status_filter: str = "all") -> str:
     """Use this when the user asks to see their orders, order history, or recent orders.
     Optionally filter by status: 'Pending', 'Confirmed', 'Preparing', 'Out for delivery', 'Delivered', 'Cancelled', or 'all'."""
 
-    token = os.getenv("MERIDIAN_TEST_TOKEN")
+    token = CURRENT_USER_TOKEN
     headers = {"Authorization": f"Bearer {token}"}
 
     try:
         response = requests.get(
-            f"{MERIDIAN_API}/api/orders",
-            headers=headers,
-            timeout=5
+            f"{MERIDIAN_API}/api/orders", headers=headers, timeout=5
         )
         response.raise_for_status()
         orders = response.json()
@@ -149,7 +145,8 @@ def get_my_orders(status_filter: str = "all") -> str:
         )
 
     return "\n".join(lines)
-    
+
+
 @tool
 def add_to_cart(food_item_id: int, quantity: int) -> str:
     """Add a specific food item to the cart.
@@ -157,7 +154,7 @@ def add_to_cart(food_item_id: int, quantity: int) -> str:
     (3) customer confirmed the full order summary.
     Never call this without an explicit quantity from the customer."""
     # ... rest of function stays the same
-    token = os.getenv("MERIDIAN_TEST_TOKEN")
+    token = CURRENT_USER_TOKEN
     headers = {"Authorization": f"Bearer {token}"}
 
     try:
@@ -165,7 +162,7 @@ def add_to_cart(food_item_id: int, quantity: int) -> str:
             f"{MERIDIAN_API}/api/cart",
             headers=headers,
             json={"foodItemId": food_item_id, "quantity": quantity},
-            timeout=5
+            timeout=5,
         )
 
         if response.status_code == 400:
@@ -180,12 +177,12 @@ def add_to_cart(food_item_id: int, quantity: int) -> str:
 
 @tool
 def place_order(street: str, city: str, state: str, zip_code: str, phone: str) -> str:
-    """Place the order using items in cart. 
+    """Place the order using items in cart.
     ONLY call this after customer has explicitly confirmed all details.
     Never call without a real phone number — do not proceed if phone is missing or invalid."""
     # ... rest of function stays the same
 
-    token = os.getenv("MERIDIAN_TEST_TOKEN")
+    token = CURRENT_USER_TOKEN
     headers = {"Authorization": f"Bearer {token}"}
 
     try:
@@ -198,9 +195,9 @@ def place_order(street: str, city: str, state: str, zip_code: str, phone: str) -
                 "state": state,
                 "zipCode": zip_code,
                 "phone": phone,
-                "grandTotal": 0  # backend calculates from cart
+                "grandTotal": 0,  # backend calculates from cart
             },
-            timeout=5
+            timeout=5,
         )
 
         if response.status_code == 400:

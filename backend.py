@@ -1,25 +1,17 @@
 import os
-import uuid
 from dotenv import load_dotenv
-
 load_dotenv()
 
 print("TOKEN LOADED:", os.getenv("MERIDIAN_TEST_TOKEN", "NOT FOUND")[:20])
 
 from fastapi import FastAPI, HTTPException
-# from fastapi import UploadFile, File  # PDF feature — disabled for deployment
 from pydantic import BaseModel
 from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 from langchain.agents import create_agent
 from fastapi.middleware.cors import CORSMiddleware
-
-# from langchain_text_splitters import RecursiveCharacterTextSplitter  # PDF feature
-# from langchain_core.vectorstores import InMemoryVectorStore  # PDF feature
-# from langchain_core.documents import Document  # PDF feature
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-# from pypdf import PdfReader  # PDF feature
-# import io  # PDF feature
+import tools as tools_module
 
 from tools import (
     check_order_status,
@@ -31,13 +23,15 @@ from tools import (
 )
 
 app = FastAPI(title="Meridian AI")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # in production, replace * with your actual domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # ─── Setup ────────────────────────────────────────────────────────────
 search_tool = TavilySearch(max_results=5)
 
@@ -64,17 +58,8 @@ class ChatRequest(BaseModel):
     model: str
     system_prompt: str
     allow_search: bool = True
-    # use_pdf: bool = False  # PDF feature — disabled
     session_id: str = "default"
-
-# ─── PDF endpoints — disabled for deployment ──────────────────────────
-# @app.post("/upload-pdf")
-# async def upload_pdf(file: UploadFile = File(...)):
-#     ... re-enable when upgrading Render plan ...
-#
-# @app.get("/pdf-status")
-# def pdf_status():
-#     ... re-enable when upgrading Render plan ...
+    user_token: str = ""  # real user JWT from React — uses admin fallback if empty
 
 # ─── Chat endpoint ─────────────────────────────────────────────────────
 @app.post("/chat")
@@ -83,6 +68,13 @@ def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Invalid model selected")
 
     llm = llm_map[request.model]
+
+    # Set the token for tools to use — real user token if provided, admin fallback if not
+    if request.user_token:
+        tools_module.CURRENT_USER_TOKEN = request.user_token
+    else:
+        tools_module.CURRENT_USER_TOKEN = os.getenv("MERIDIAN_TEST_TOKEN", "")
+
     history = conversation_store.get(request.session_id, [])
 
     messages = [SystemMessage(content=request.system_prompt)]
